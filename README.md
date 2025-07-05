@@ -187,4 +187,35 @@ This configuration ensures that only authorized application servers can access c
 
 This configuration enables seamless service-to-service communication within the backend tier while maintaining isolation from external networks.
 
+## Restricting SSH and Application Access to Your IP
+
+To further enhance security, SSH and direct application access have been restricted to your specific IP address for both the application and backend security groups.
+
+### Application Security Group (`sg-010857c931e32ff55 - vprofile-app-sg`)
+
+![App SG SSH and 8080 Rule](images/app-sg-ssh-8080-rule.png)
+
+- **Port 22 (SSH):**
+  - **Source:** Your IP address (`38.49.72.189/32`)
+  - **Purpose:** Only your IP can SSH into the application server, preventing unauthorized access from the public internet.
+
+- **Port 8080 (Tomcat Application):**
+  - **Source:** Your IP address (`38.49.72.189/32`)
+  - **Purpose:** Only your IP can access the Tomcat application directly on port 8080, blocking all other external access.
+
+### Backend Security Group (`sg-03dfd52e53d36eabe - vprofile-backend-SG`)
+
+![Backend SG SSH Rule](images/backend-sg-ssh-rule.png)
+
+- **Port 22 (SSH):**
+  - **Source:** Your IP address (`38.49.72.189/32`)
+  - **Purpose:** Only your IP can SSH into backend servers, ensuring administrative access is tightly controlled.
+
+**Why this is a best practice:**
+- Minimizes the risk of brute-force attacks and unauthorized access.
+- Limits administrative and debugging access to trusted sources only.
+- Follows the principle of least privilege for network access.
+
+This configuration is essential for maintaining a secure cloud environment and protecting your infrastructure from external threats.
+
 
