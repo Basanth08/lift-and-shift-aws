@@ -235,4 +235,54 @@ A new key pair was created for secure SSH access to EC2 instances:
 
 This step is essential for maintaining secure and controlled access to your cloud infrastructure.
 
+# EC2 Instance Deployment
+
+![EC2 Instance Deployment](images/ec2-instance-deployment.png)
+
+The VProfile application is deployed using multiple EC2 instances, each dedicated to a specific component for modularity, scalability, and fault isolation:
+
+- **vprofile-mc01:** Memcached instance
+- **vprofile-db01:** MySQL database instance
+- **vprofile-app01:** Tomcat application server instance
+- **vprofile-rmq01:** RabbitMQ instance
+
+Each instance runs in the same Availability Zone (`us-east-1a`) and is monitored for health and status. This architecture allows for independent scaling, easier troubleshooting, and improved reliability of each service.
+
+# Step-by-Step Database Server Setup (MariaDB on EC2)
+
+This section documents the process followed to set up a production-ready MariaDB database server for the VProfile application on AWS EC2:
+
+1. **Launched a new EC2 instance** with a larger EBS volume and added swap space to prevent memory issues during installation.
+2. **Associated an Elastic IP** and configured security groups to allow SSH access from the current public IP.
+3. **Connected to the instance via SSH** using a secure private key.
+4. **Added 1GB of swap space** to avoid out-of-memory errors during package installation.
+5. **Installed required packages:** `epel-release`, `git`, `zip`, `unzip`, and `mariadb-server`.
+6. **Uploaded and executed an improved `mysql.sh` script** that:
+   - Started and enabled the MariaDB service
+   - Cloned the `vprofile-project` repository
+   - Set the MariaDB root password
+   - Cleaned up default users and test databases
+   - Created the `accounts` database and the `admin` user with appropriate privileges
+   - Imported the schema and data from the project's `db_backup.sql`
+   - Skipped firewall configuration if `firewalld` was not installed
+7. **Verified the database setup** by logging into MariaDB, confirming the existence of the `accounts` database, its tables, and the correct users.
+8. **Troubleshot and fixed issues** related to memory, missing files, and permissions to ensure a smooth, repeatable setup.
+
+This process results in a robust, production-ready MariaDB environment, fully prepared for the VProfile application to connect and operate securely and efficiently on AWS.
+
+# Step-by-Step Multi-Tier Application Deployment on AWS
+
+This section documents the process followed to set up a robust, production-like AWS environment for a multi-tier Java web application (VProfile):
+
+1. **Launched multiple EC2 instances** for different roles: MariaDB (database), Memcached, RabbitMQ, and Tomcat (application server).
+2. **Assigned Elastic IPs** to each instance for public access and configured security groups to allow only necessary traffic (SSH, application ports, etc.).
+3. **Added swap space** to t2.micro instances to prevent out-of-memory errors during package installation.
+4. **MariaDB Server:** Uploaded and executed an improved `mysql.sh` script to automate installation, configuration, database/user creation, and schema import. Verified the setup via the MariaDB CLI.
+5. **Memcached Server:** Uploaded and executed `memcache.sh` to automate installation and configuration, ensuring Memcached listens on all interfaces. Verified Memcached is running and accessible on port 11211.
+6. **RabbitMQ Server:** Uploaded and prepared to execute `rabbitmq.sh` to automate installation, configuration, user/admin setup, and port opening for messaging.
+7. **Tomcat Server:** Launched an Ubuntu 24.04 instance, discovered Tomcat 9 is not available in default repos, downloaded and installed Tomcat 9.0.87 manually from Apache archives, set permissions, started Tomcat, and located the `webapps` directory for application deployment.
+8. **General Linux & AWS Skills:** Used `scp` to transfer scripts, `systemctl` to manage and check the status of services, `ss`/`netstat` to verify services are listening on the correct ports, and troubleshot/fixed issues related to memory, missing packages, and network/firewall settings.
+
+This process results in a scalable, secure, and production-ready AWS environment for deploying and running a multi-tier Java web application, with all supporting services (database, cache, messaging, and application server) properly configured and verified.
+
 
