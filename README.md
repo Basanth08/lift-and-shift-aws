@@ -218,4 +218,21 @@ To further enhance security, SSH and direct application access have been restric
 
 This configuration is essential for maintaining a secure cloud environment and protecting your infrastructure from external threats.
 
+# Key Pair Creation for EC2 Access
+
+![Key Pair Creation](images/key-pair-creation.png)
+
+A new key pair was created for secure SSH access to EC2 instances:
+
+- **Key Pair Name:** vprofile-prod-key
+- **Type:** RSA
+- **Purpose:** Secure SSH access to your EC2 instances
+
+**Why this is important:**
+- The key pair is used for SSH authentication, ensuring only users with the private key can access your EC2 instances.
+- Each environment (production, staging, etc.) should have its own key pair for better access control and security.
+- AWS requires a key pair to be specified when launching EC2 instances if you want to connect via SSH.
+
+This step is essential for maintaining secure and controlled access to your cloud infrastructure.
+
 
