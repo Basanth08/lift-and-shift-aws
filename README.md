@@ -118,4 +118,73 @@ The following are the high-level steps for deploying the VProfile application on
 
 These steps outline the end-to-end process for provisioning infrastructure, deploying the application, and ensuring scalability and security in the AWS cloud.
 
+# Domain, SSL, and Security Group Setup
+
+To ensure secure and best-practice cloud deployment, the following steps were performed:
+
+1. **ACM Certificate for Custom Domain**
+   - An SSL/TLS certificate was requested from AWS Certificate Manager (ACM) for the domain `basantthvaraganti.xyz` (registered with GoDaddy).
+   - Domain ownership was validated by adding the required CNAME record (with the CNAME name and value provided by ACM) to the GoDaddy DNS settings.
+   - This enables secure HTTPS connections to your website.
+
+2. **Security Group for Load Balancer**
+   - A security group was created for the Application Load Balancer (ALB).
+   - This security group allows inbound HTTPS (port 443) and/or HTTP (port 80) traffic from the internet to the load balancer.
+
+3. **Security Group for Tomcat Servers**
+   - A separate security group was created for the Tomcat EC2 instances.
+   - This security group allows inbound traffic on port 8080, but only from the security group associated with the load balancer (not from the public internet).
+   - This ensures that only the load balancer can communicate directly with the Tomcat servers, improving security.
+
+**Why these steps matter:**
+- The ACM certificate ensures all traffic to your website is encrypted and secure.
+- Security groups act as virtual firewalls, controlling access and reducing the attack surface.
+- Restricting Tomcat's access to only the load balancer follows best security practices and protects your application servers from direct public exposure.
+
+These configurations are essential for a secure, scalable, and production-ready cloud deployment.
+
+# Internal Security Group Rules for Application Services
+
+To secure internal communication between your application servers and backend services, the following security group rules were configured:
+
+![Internal Security Group Rules](images/internal-security-group-rules.png)
+
+- **MySQL/Aurora (Port 3306):**
+  - **Source:** Tomcat security group (`sg-010857c931e32ff55`)
+  - **Purpose:** Allows Tomcat application servers to connect to the MySQL database.
+
+- **Memcached (Port 11211):**
+  - **Source:** Tomcat security group (`sg-010857c931e32ff55`)
+  - **Purpose:** Allows Tomcat servers to connect to Memcached for caching.
+
+- **RabbitMQ (Port 5672):**
+  - **Source:** Tomcat security group (`sg-010857c931e32ff55`)
+  - **Purpose:** Allows Tomcat servers to connect to RabbitMQ for messaging.
+
+**Why this setup is important:**
+- Follows the principle of least privilege by restricting access to backend services only to the necessary application servers.
+- Enhances security by isolating services from public access and other unrelated resources.
+- Aligns with AWS best practices for internal service communication and network segmentation.
+
+This configuration ensures that only authorized application servers can access critical backend services, reducing the risk of unauthorized access and improving the overall security posture of your cloud environment.
+
+## Allowing Internal Traffic Within the Backend Security Group
+
+![Backend Security Group Internal Rule]
+
+- **Type:** All traffic (all protocols, all ports)
+- **Source:** The backend security group itself (`sg-03dfd52e53d36eabe`)
+- **Description:** Allow internal traffic to flow on all ports
+
+**Purpose:**
+- This rule allows all instances that are members of the backend security group to communicate freely with each other on any port and protocol.
+
+**Use Case:**
+- Useful for backend services (like MySQL, Memcached, RabbitMQ, etc.) that need to communicate with each other for clustering, replication, or other internal operations.
+
+**Security Note:**
+- This rule is safe as long as only trusted backend instances are part of this security group. It does not expose these services to the public internet.
+
+This configuration enables seamless service-to-service communication within the backend tier while maintaining isolation from external networks.
+
 
