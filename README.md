@@ -285,4 +285,14 @@ This section documents the process followed to set up a robust, production-like 
 
 This process results in a scalable, secure, and production-ready AWS environment for deploying and running a multi-tier Java web application, with all supporting services (database, cache, messaging, and application server) properly configured and verified.
 
+# Internal DNS with AWS Route 53
+
+To enable flexible and maintainable service discovery within the AWS environment, AWS Route 53 was used to create internal DNS records for backend services:
+
+- **db01.vprofile.in** → 172.31.8.67 (Database server)
+- **mc01.vprofile.in** → 172.31.5.41 (Memcached server)
+- **rmq01.vprofile.in** → 172.31.8.126 (RabbitMQ server)
+
+This setup allows application components to refer to backend services by easy-to-remember DNS names instead of private IP addresses. If the underlying EC2 instance changes, only the DNS record needs to be updated, not every client configuration. This approach is a best practice for cloud-native and multi-tier deployments, improving flexibility, scalability, and maintainability.
+
 
