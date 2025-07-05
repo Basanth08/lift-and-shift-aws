@@ -1,18 +1,15 @@
 # About The Project
 
-![About The Project](images/about-the-project.png)
 
 This project demonstrates a **Multi-Tier Web Application Stack (VPROFILE)** designed to be hosted and run on AWS Cloud for production using a **Lift & Shift strategy**. The goal is to migrate existing application workloads to the cloud with minimal changes, leveraging AWS infrastructure for scalability and reliability.
 
 # Scenario
 
-![Scenario](images/scenario.png)
 
 Initially, application services are running on physical or virtual machines within a traditional datacenter. These services include various technologies such as DNS, PostgreSQL, Oracle, Node.js, Apache Tomcat, NGINX, LAMP stack, Java, MySQL, and PHP. The workload is managed within your own datacenter environment, setting the stage for migration to the cloud.
 
 # Problem
 
-![Problem](images/problem.png)
 
 Traditional datacenter environments face several challenges:
 - **Complex Management:** Managing multiple services and infrastructure components is difficult and time-consuming.
@@ -23,7 +20,6 @@ These issues motivate the move to cloud-based solutions using strategies like Li
 
 ## Additional Problems
 
-![Problem - Manual Process](images/problem-manual-process.png)
 
 - **Manual Process:** Many tasks require manual intervention, increasing the risk of errors.
 - **Difficult to Automate:** Legacy systems and processes are not designed for automation, making it hard to streamline operations.
@@ -31,7 +27,6 @@ These issues motivate the move to cloud-based solutions using strategies like Li
 
 # Solution
 
-![Solution](images/solution.png)
 
 Moving to a cloud setup addresses the challenges of traditional datacenter management by providing:
 - **Automation:** Streamlines processes and reduces manual intervention.
@@ -43,8 +38,6 @@ Moving to a cloud setup addresses the challenges of traditional datacenter manag
 Cloud solutions enable organizations to be more agile, cost-effective, and efficient in managing their IT infrastructure.
 
 # AWS Cloud Components Mapping
-
-![AWS Cloud Components Mapping](images/aws-cloud-components-mapping.png)
 
 This project leverages various AWS services to replace traditional infrastructure components:
 
@@ -82,7 +75,6 @@ Then look for the file :
 
 # Objective
 
-![Objective](images/objective.png)
 
 The main objectives of this project are:
 - **Flexible Infrastructure:** Easily scale and adapt resources as needed.
@@ -108,7 +100,6 @@ This architecture ensures high availability, security, and efficient resource ut
 
 # Flow of Execution
 
-![Flow of Execution](images/flow-of-execution.png)
 
 The following are the high-level steps for deploying the VProfile application on AWS:
 
