@@ -75,7 +75,6 @@ Then look for the file :
 
 # Objective
 
-
 The main objectives of this project are:
 - **Flexible Infrastructure:** Easily scale and adapt resources as needed.
 - **No Upfront Cost:** Leverage cloud pay-as-you-go models to avoid large initial investments.
@@ -99,7 +98,6 @@ The architecture of this project is designed for scalability, security, and clou
 This architecture ensures high availability, security, and efficient resource utilization in the AWS cloud.
 
 # Flow of Execution
-
 
 The following are the high-level steps for deploying the VProfile application on AWS:
 
@@ -147,8 +145,6 @@ These configurations are essential for a secure, scalable, and production-ready 
 
 To secure internal communication between your application servers and backend services, the following security group rules were configured:
 
-![Internal Security Group Rules](images/internal-security-group-rules.png)
-
 - **MySQL/Aurora (Port 3306):**
   - **Source:** Tomcat security group (`sg-010857c931e32ff55`)
   - **Purpose:** Allows Tomcat application servers to connect to the MySQL database.
@@ -193,8 +189,6 @@ To further enhance security, SSH and direct application access have been restric
 
 ### Application Security Group (`sg-010857c931e32ff55 - vprofile-app-sg`)
 
-![App SG SSH and 8080 Rule](images/app-sg-ssh-8080-rule.png)
-
 - **Port 22 (SSH):**
   - **Source:** Your IP address (`38.49.72.189/32`)
   - **Purpose:** Only your IP can SSH into the application server, preventing unauthorized access from the public internet.
@@ -204,8 +198,6 @@ To further enhance security, SSH and direct application access have been restric
   - **Purpose:** Only your IP can access the Tomcat application directly on port 8080, blocking all other external access.
 
 ### Backend Security Group (`sg-03dfd52e53d36eabe - vprofile-backend-SG`)
-
-![Backend SG SSH Rule](images/backend-sg-ssh-rule.png)
 
 - **Port 22 (SSH):**
   - **Source:** Your IP address (`38.49.72.189/32`)
@@ -219,8 +211,6 @@ To further enhance security, SSH and direct application access have been restric
 This configuration is essential for maintaining a secure cloud environment and protecting your infrastructure from external threats.
 
 # Key Pair Creation for EC2 Access
-
-![Key Pair Creation](images/key-pair-creation.png)
 
 A new key pair was created for secure SSH access to EC2 instances:
 
@@ -236,8 +226,6 @@ A new key pair was created for secure SSH access to EC2 instances:
 This step is essential for maintaining secure and controlled access to your cloud infrastructure.
 
 # EC2 Instance Deployment
-
-![EC2 Instance Deployment](images/ec2-instance-deployment.png)
 
 The VProfile application is deployed using multiple EC2 instances, each dedicated to a specific component for modularity, scalability, and fault isolation:
 
@@ -294,5 +282,134 @@ To enable flexible and maintainable service discovery within the AWS environment
 - **rmq01.vprofile.in** → 172.31.8.126 (RabbitMQ server)
 
 This setup allows application components to refer to backend services by easy-to-remember DNS names instead of private IP addresses. If the underlying EC2 instance changes, only the DNS record needs to be updated, not every client configuration. This approach is a best practice for cloud-native and multi-tier deployments, improving flexibility, scalability, and maintainability.
+
+# Application Build and Deployment
+
+The final step in the deployment pipeline is building and deploying the Java application to the Tomcat server:
+
+1. **Build the application using Maven:**
+   - Ran `mvn install` to compile the code and generate a `.war` file in the `target/` directory.
+2. **Transfer the `.war` file to the Tomcat server:**
+   - Used `scp` to copy the `.war` file from the local machine to the Tomcat server's `/opt/tomcat9/webapps/` directory:
+     ```sh
+     scp -i ~/Downloads/vprofile-prod-key.pem /path/to/your-app.war ubuntu@<tomcat-public-ip>:/opt/tomcat9/webapps/
+     ```
+3. **Tomcat automatically deploys the `.war` file** when it is placed in the `webapps` directory.
+4. **Access the application in a browser:**
+   - Go to `http://<tomcat-public-ip>:8080/<app-name>/` (replace `<app-name>` with the name of your `.war` file, minus the `.war` extension).
+
+This completes the end-to-end deployment pipeline, taking your code from build to a running application in the AWS environment.
+
+# Storing Build Artifacts in AWS S3
+
+To enable centralized, cloud-based storage of build artifacts for deployment, backup, or sharing across environments, the following steps were performed:
+
+1. **Configured AWS CLI** with credentials, default region, and output format:
+   - Ran `aws configure` and entered the AWS Access Key ID, Secret Access Key, region (`us-east-1`), and output format (`json`).
+2. **Created an S3 bucket** for storing artifacts:
+   - Ran `aws s3 mb s3://basantth-war-artifacts` to create the bucket.
+3. **Uploaded the built `.war` file to S3:**
+   - Ran `aws s3 cp target/vprofile-v2.war s3://basantth-war-artifacts` to upload the WAR file to the bucket.
+
+This approach enables easy, reliable storage and retrieval of build artifacts, supporting automated deployments and multi-environment workflows in the cloud.
+
+# IAM Role, User, and S3 Artifact Deployment Process
+
+To securely manage access to AWS resources and automate artifact deployment, the following steps were performed:
+
+1. **Created an IAM Role for EC2:**
+   - Created a new IAM role with a trust relationship for EC2 service.
+   - Attached policies such as `AmazonS3ReadOnlyAccess` (or a custom policy with least-privilege S3 access) to allow EC2 instances to access S3 buckets for artifact download.
+   - Assigned this IAM role to the EC2 instance running Tomcat.
+
+2. **Created an IAM User for Artifact Management:**
+   - Created a dedicated IAM user for managing build artifacts.
+   - Attached policies such as `AmazonS3FullAccess` (or a custom policy with limited S3 permissions) to this user for uploading and managing artifacts in S3.
+   - Generated Access Key ID and Secret Access Key for this user.
+
+3. **Configured AWS CLI on EC2 Instance:**
+   - Ran `aws configure` on the EC2 instance.
+   - Entered the IAM user's Access Key ID, Secret Access Key, default region, and output format.
+   - Verified configuration by running `aws s3 ls` to list available S3 buckets.
+
+4. **Uploaded Build Artifact to S3:**
+   - Used the AWS CLI to upload the built `.war` file to the S3 bucket:
+     ```sh
+     aws s3 cp target/vprofile-v2.war s3://basantth-war-artifacts/
+     ```
+
+5. **Downloaded Artifact from S3 to EC2:**
+   - On the Tomcat EC2 instance, downloaded the `.war` file from S3:
+     ```sh
+     aws s3 cp s3://basantth-war-artifacts/vprofile-v2.war /tmp/
+     ```
+
+6. **Deployed Artifact to Tomcat:**
+   - Stopped Tomcat using the manual script:
+     ```sh
+     /opt/tomcat9/bin/shutdown.sh
+     ```
+   - Copied the WAR file to the Tomcat webapps directory as `ROOT.war`:
+     ```sh
+     cp /tmp/vprofile-v2.war /opt/tomcat9/webapps/ROOT.war
+     ```
+   - Started Tomcat:
+     ```sh
+     /opt/tomcat9/bin/startup.sh
+     ```
+
+This process ensures secure, auditable, and automated management of application artifacts using AWS IAM best practices and S3 as a central artifact repository. It also enables seamless deployment and redeployment of application builds to EC2 instances in a production environment.
+
+# Configuring Custom Domain with AWS Load Balancer and GoDaddy
+
+To route traffic from a custom domain to the AWS-hosted application, the following steps were performed:
+
+1. **Created an Application Load Balancer (ALB) in AWS:**
+   - Set up an ALB to distribute incoming traffic across backend EC2 instances for high availability and scalability.
+
+2. **Created a Target Group:**
+   - Defined a target group and registered backend EC2 instances (e.g., Tomcat servers) to receive traffic from the load balancer.
+
+3. **Copied the Load Balancer DNS Name:**
+   - Retrieved the DNS name of the ALB (e.g., `my-alb-1234567890.us-east-1.elb.amazonaws.com`) from the AWS console.
+
+4. **Updated GoDaddy Domain DNS Settings:**
+   - Logged into GoDaddy domain management.
+   - Created a DNS record:
+     - **Type:** CNAME (for subdomains like www) or A (Alias) for root domain
+     - **Name:** `www` (or `@` for root domain)
+     - **Value:** The ALB DNS name
+   - Saved the changes and waited for DNS propagation.
+
+5. **Tested Domain Routing:**
+   - Opened the custom domain in a browser to verify it routes traffic to the AWS application via the load balancer.
+
+**Result:**
+- The custom domain (e.g., `www.yourdomain.com`) now points to the AWS load balancer, enabling scalable, highly available access to the application.
+- This setup allows seamless management of backend servers and supports future scaling or failover scenarios.
+
+**Note:**
+- For production, it is recommended to set up an SSL certificate (via AWS ACM) and enable HTTPS on the load balancer for secure traffic.
+
+# Auto Scaling Group Setup for Application Servers
+
+To ensure high availability, scalability, and automated recovery for the application servers, the following steps were performed:
+
+1. **Created an Amazon Machine Image (AMI):**
+   - Generated an AMI from a fully configured and tested EC2 instance running the application stack.
+   - This AMI serves as a golden image for launching new instances with identical configuration.
+
+2. **Created a Launch Template:**
+   - Defined a launch template using the AMI, specifying instance type, security groups, key pair, and other required settings.
+   - The launch template standardizes instance creation and ensures consistency across all application servers.
+
+3. **Created an Auto Scaling Group (ASG):**
+   - Set up an Auto Scaling Group using the launch template.
+   - Configured the ASG with minimum, maximum, and desired instance counts.
+   - Attached the ASG to the Application Load Balancer for automatic registration and deregistration of instances.
+   - Enabled health checks and automatic instance replacement for fault tolerance.
+
+**Result:**  
+The application server layer is now highly available and scalable. The Auto Scaling Group automatically maintains the desired number of healthy instances, replaces failed instances, and scales the environment based on demand.
 
 
